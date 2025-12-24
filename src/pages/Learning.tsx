@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Settings, ChevronLeft, ChevronRight, Image, Type } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -171,8 +171,8 @@ const Learning = () => {
   const [shuffledIndices, setShuffledIndices] = useState<number[]>([]);
   const [shufflePosition, setShufflePosition] = useState(0);
 
-  // For repetitive speech
-  const [repeatIntervalId, setRepeatIntervalId] = useState<number | null>(null);
+  // For repetitive speech - use ref to avoid stale closure issues
+  const repeatIntervalRef = useRef<number | null>(null);
 
   const currentWord = words[currentIndex] || null;
 
@@ -224,9 +224,9 @@ const Learning = () => {
     setHighlightedKey(first.toLowerCase());
 
     // Clear any existing repeat interval
-    if (repeatIntervalId !== null) {
-      clearInterval(repeatIntervalId);
-      setRepeatIntervalId(null);
+    if (repeatIntervalRef.current !== null) {
+      clearInterval(repeatIntervalRef.current);
+      repeatIntervalRef.current = null;
     }
 
     if (speechUnlocked) {
@@ -237,14 +237,15 @@ const Learning = () => {
         const intervalId = window.setInterval(() => {
           speak(first);
         }, 3000);
-        setRepeatIntervalId(intervalId);
+        repeatIntervalRef.current = intervalId;
       }, 400);
     }
 
     // Cleanup on unmount or when dependencies change
     return () => {
-      if (repeatIntervalId !== null) {
-        clearInterval(repeatIntervalId);
+      if (repeatIntervalRef.current !== null) {
+        clearInterval(repeatIntervalRef.current);
+        repeatIntervalRef.current = null;
       }
     };
   }, [currentIndex, words]);
@@ -309,9 +310,9 @@ const Learning = () => {
 
     if (lower.length < currentWord.word.length) {
       // Clear the previous repeat interval when a letter is typed correctly
-      if (repeatIntervalId !== null) {
-        clearInterval(repeatIntervalId);
-        setRepeatIntervalId(null);
+      if (repeatIntervalRef.current !== null) {
+        clearInterval(repeatIntervalRef.current);
+        repeatIntervalRef.current = null;
       }
 
       const next = currentWord.word[lower.length];
@@ -326,13 +327,13 @@ const Learning = () => {
         const intervalId = window.setInterval(() => {
           speak(next);
         }, 3000);
-        setRepeatIntervalId(intervalId);
+        repeatIntervalRef.current = intervalId;
       }, 400);
     } else {
       // Clear the repeat interval when word is completed
-      if (repeatIntervalId !== null) {
-        clearInterval(repeatIntervalId);
-        setRepeatIntervalId(null);
+      if (repeatIntervalRef.current !== null) {
+        clearInterval(repeatIntervalRef.current);
+        repeatIntervalRef.current = null;
       }
 
       setSuggestion("");
