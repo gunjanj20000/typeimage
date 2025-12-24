@@ -171,6 +171,9 @@ const Learning = () => {
   const [shuffledIndices, setShuffledIndices] = useState<number[]>([]);
   const [shufflePosition, setShufflePosition] = useState(0);
 
+  // For repetitive speech
+  const [repeatIntervalId, setRepeatIntervalId] = useState<number | null>(null);
+
   const currentWord = words[currentIndex] || null;
 
   /* SHUFFLE HELPER */
@@ -220,9 +223,30 @@ const Learning = () => {
     setSuggestion(first.toUpperCase());
     setHighlightedKey(first.toLowerCase());
 
-    if (speechUnlocked) {
-      setTimeout(() => speak(first), 400);
+    // Clear any existing repeat interval
+    if (repeatIntervalId !== null) {
+      clearInterval(repeatIntervalId);
+      setRepeatIntervalId(null);
     }
+
+    if (speechUnlocked) {
+      setTimeout(() => {
+        speak(first);
+        
+        // Start repetitive speech every 3 seconds
+        const intervalId = window.setInterval(() => {
+          speak(first);
+        }, 3000);
+        setRepeatIntervalId(intervalId);
+      }, 400);
+    }
+
+    // Cleanup on unmount or when dependencies change
+    return () => {
+      if (repeatIntervalId !== null) {
+        clearInterval(repeatIntervalId);
+      }
+    };
   }, [currentIndex, words]);
 
   /* CATEGORY FILTER */
@@ -284,11 +308,33 @@ const Learning = () => {
     setCurrentInput(lower);
 
     if (lower.length < currentWord.word.length) {
+      // Clear the previous repeat interval when a letter is typed correctly
+      if (repeatIntervalId !== null) {
+        clearInterval(repeatIntervalId);
+        setRepeatIntervalId(null);
+      }
+
       const next = currentWord.word[lower.length];
       setSuggestion(next.toUpperCase());
       setHighlightedKey(next.toLowerCase());
-      speak(next);
+      
+      // Add a small delay before speaking the next letter
+      setTimeout(() => {
+        speak(next);
+        
+        // Start new repetitive speech for the next letter
+        const intervalId = window.setInterval(() => {
+          speak(next);
+        }, 3000);
+        setRepeatIntervalId(intervalId);
+      }, 400);
     } else {
+      // Clear the repeat interval when word is completed
+      if (repeatIntervalId !== null) {
+        clearInterval(repeatIntervalId);
+        setRepeatIntervalId(null);
+      }
+
       setSuggestion("");
       setHighlightedKey("");
       setWordCompleted(true);
