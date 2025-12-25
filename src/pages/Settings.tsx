@@ -702,8 +702,8 @@ export default function Settings() {
                   </DropdownMenuContent>
                 </DropdownMenu>
 
-                {/* Auto-backup button (only show on supported browsers) */}
-                {autoBackupSupported && autoBackupEnabled ? (
+                {/* Backup button - always show */}
+                {autoBackupEnabled && autoBackupSupported ? (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
@@ -729,17 +729,32 @@ export default function Settings() {
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
-                ) : autoBackupSupported ? (
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="outline"
-                    title={/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? "Setup Auto-Backup to Downloads" : "Setup Auto-Backup"}
-                    onClick={handleSetupAutoBackup}
-                  >
-                    <Download className="h-4 w-4" />
-                  </Button>
-                ) : null}
+                ) : (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="outline"
+                        title="Backup"
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={handleBackup}>
+                        <Download className="h-4 w-4 mr-2" />
+                        Manual Backup
+                      </DropdownMenuItem>
+                      {autoBackupSupported && (
+                        <DropdownMenuItem onClick={handleSetupAutoBackup}>
+                          <UploadCloud className="h-4 w-4 mr-2" />
+                          {/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? "Setup Auto-Backup to Downloads" : "Setup Auto-Backup"}
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
 
                 <input
                   id="backup-input"
