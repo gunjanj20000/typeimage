@@ -80,6 +80,7 @@ type LearningMode = "image-first" | "word-first";
 ========================= */
 let speechUnlocked = false;
 let lastSpoken = "";
+let lastSpokenAt = 0;
 let selectedVoice: SpeechSynthesisVoice | null = null;
 
 // Load voices and select Indian/Female voice
@@ -117,8 +118,14 @@ if (typeof window !== 'undefined') {
 }
 
 const speak = (text: string) => {
-  if (!speechUnlocked || !text || text === lastSpoken) return;
+  if (!speechUnlocked || !text) return;
+
+  // Allow repeats but throttle rapid back-to-back calls (e.g., multiple triggers in the same tick)
+  const now = Date.now();
+  if (text === lastSpoken && now - lastSpokenAt < 800) return;
+
   lastSpoken = text;
+  lastSpokenAt = now;
   speechSynthesis.cancel();
 
   const u = new SpeechSynthesisUtterance(text);
